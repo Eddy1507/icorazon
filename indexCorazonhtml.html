@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Corazón Neón</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+
+            width: 100%;
+            height: 100%;
+
+            overflow: hidden;
+
+            background: #000;
+
+        }
+
+
+        body {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+        }
+
+
+        canvas {
+
+            display: block;
+
+            width: 100%;
+            height: 100%;
+
+        }
+
+
+        #texto {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: white;
+
+    font-family: Arial, sans-serif;
+
+    font-size: clamp(25px, 7vw, 60px);
+
+    font-weight: bold;
+
+    letter-spacing: 4px;
+
+    text-align: center;
+
+    z-index: 10;
+
+    pointer-events: none;
+
+    text-shadow:
+        0 0 5px white,
+        0 0 10px #ff00ff,
+        0 0 20px #ff00ff,
+        0 0 40px #ff00ff;
+}
+
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="texto">TE AMO  </div>
+
+
+
+
+<script>
+
+
+// =====================================================
+// CANVAS
+// =====================================================
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+let width;
+let height;
+
+
+function resize() {
+
+    width =
+        canvas.width =
+        window.innerWidth;
+
+    height =
+        canvas.height =
+        window.innerHeight;
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resize
+);
+
+resize();
+
+
+
+// =====================================================
+// CONFIGURACIÓN
+// =====================================================
+
+const TOTAL_POINTS = 1200;
+
+
+// Velocidad de formación
+const SPEED = 0.004;
+
+
+// Colores que recorrerá la línea
+const COLOR_SPEED = 0.8;
+
+
+// =====================================================
+// CREAR LA FORMA DEL CORAZÓN
+// =====================================================
+
+const heart = [];
+
+
+for (
+    let i = 0;
+    i < TOTAL_POINTS;
+    i++
+) {
+
+    const t =
+        (Math.PI * 2 * i) /
+        TOTAL_POINTS;
+
+
+    /*
+    Fórmula matemática del corazón
+    */
+
+    const x =
+        16 *
+        Math.pow(
+            Math.sin(t),
+            3
+        );
+
+
+    const y =
+        13 * Math.cos(t)
+        - 5 * Math.cos(2 * t)
+        - 2 * Math.cos(3 * t)
+        - Math.cos(4 * t);
+
+
+    heart.push({
+
+        x: x,
+
+        y: -y
+
+    });
+
+}
+
+
+
+// =====================================================
+// ANIMACIÓN
+// =====================================================
+
+let progress = 0;
+
+
+// Color inicial
+let colorOffset = 300;
+
+
+
+function animate() {
+
+
+    // ================================================
+    // FONDO
+    // ================================================
+
+    ctx.fillStyle =
+        "rgba(0, 0, 0, 0.20)";
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+
+    // ================================================
+    // ESCALA
+    // ================================================
+
+    const scale =
+        Math.min(
+            width,
+            height
+        ) / 34;
+
+
+
+    const centerX =
+        width / 2;
+
+
+    const centerY =
+        height / 2;
+
+
+
+    // ================================================
+    // CUÁNTO DEL CORAZÓN SE HA DIBUJADO
+    // ================================================
+
+    const half =
+        Math.floor(
+            TOTAL_POINTS / 2
+        );
+
+
+    const amount =
+        Math.floor(
+            progress * half
+        );
+
+
+
+    // ================================================
+    // DIBUJAR LAS DOS LÍNEAS
+    // ================================================
+
+
+    /*
+    Primera línea:
+
+    Empieza arriba
+    y avanza por un lado.
+    */
+
+    drawLine(
+        0,
+        amount,
+        1
+    );
+
+
+    /*
+    Segunda línea:
+
+    Empieza exactamente
+    en el mismo punto de arriba
+    pero avanza en dirección contraria.
+    */
+
+    drawLine(
+        TOTAL_POINTS,
+        amount,
+        -1
+    );
+
+
+
+    // ================================================
+    // AVANZAR
+    // ================================================
+
+    progress += SPEED;
+
+
+    /*
+    Cambiar colores
+    mientras se está formando
+    */
+
+    colorOffset +=
+        COLOR_SPEED;
+
+
+
+    // ================================================
+    // CUANDO TERMINA
+    // ================================================
+
+    if (progress >= 1) {
+
+        progress = 0;
+
+        colorOffset += 60;
+
+    }
+
+
+    requestAnimationFrame(
+        animate
+    );
+
+}
+
+
+
+// =====================================================
+// DIBUJAR UNA DE LAS DOS LÍNEAS
+// =====================================================
+
+function drawLine(
+    start,
+    amount,
+    direction
+) {
+
+
+    if (amount <= 0) {
+        return;
+    }
+
+
+    ctx.beginPath();
+
+
+
+    let lastX = 0;
+    let lastY = 0;
+
+
+
+    for (
+        let i = 0;
+        i <= amount;
+        i++
+    ) {
+
+
+        /*
+        Índice de la partícula
+
+        Una línea va hacia adelante
+        y la otra hacia atrás.
+        */
+
+        let index;
+
+
+        if (direction === 1) {
+
+            index =
+                i;
+
+        } else {
+
+            index =
+                TOTAL_POINTS - i;
+
+        }
+
+
+        /*
+        Mantener el índice dentro
+        del arreglo
+        */
+
+        index =
+            ((index % TOTAL_POINTS)
+            + TOTAL_POINTS)
+            % TOTAL_POINTS;
+
+
+
+        const point =
+            heart[index];
+
+
+
+        const x =
+            width / 2 +
+            point.x *
+            (Math.min(width, height) / 34);
+
+
+        const y =
+            height / 2 +
+            point.y *
+            (Math.min(width, height) / 34);
+
+
+
+        if (i === 0) {
+
+            ctx.moveTo(
+                x,
+                y
+            );
+
+        } else {
+
+            ctx.lineTo(
+                x,
+                y
+            );
+
+        }
+
+
+        lastX = x;
+        lastY = y;
+
+    }
+
+
+
+    // ================================================
+    // COLOR DE LA LÍNEA
+    // ================================================
+
+    const hue =
+        (
+            colorOffset +
+            amount * 1.2
+        ) % 360;
+
+
+
+    const color =
+        `hsl(${hue}, 100%, 65%)`;
+
+
+    const glow =
+        `hsl(${hue}, 100%, 60%)`;
+
+
+
+    // ================================================
+    // BRILLO EXTERIOR
+    // ================================================
+
+    ctx.shadowBlur = 35;
+
+    ctx.shadowColor =
+        glow;
+
+    ctx.strokeStyle =
+        `hsla(
+            ${hue},
+            100%,
+            60%,
+            0.35
+        )`;
+
+    ctx.lineWidth = 10;
+
+    ctx.stroke();
+
+
+
+    // ================================================
+    // LÍNEA NEÓN
+    // ================================================
+
+    ctx.beginPath();
+
+
+    for (
+        let i = 0;
+        i <= amount;
+        i++
+    ) {
+
+        let index;
+
+
+        if (direction === 1) {
+
+            index = i;
+
+        } else {
+
+            index =
+                TOTAL_POINTS - i;
+
+        }
+
+
+        index =
+            ((index % TOTAL_POINTS)
+            + TOTAL_POINTS)
+            % TOTAL_POINTS;
+
+
+        const point =
+            heart[index];
+
+
+        const x =
+            width / 2 +
+            point.x *
+            (Math.min(width, height) / 34);
+
+
+        const y =
+            height / 2 +
+            point.y *
+            (Math.min(width, height) / 34);
+
+
+
+        if (i === 0) {
+
+            ctx.moveTo(
+                x,
+                y
+            );
+
+        } else {
+
+            ctx.lineTo(
+                x,
+                y
+            );
+
+        }
+
+    }
+
+
+
+    ctx.shadowBlur = 18;
+
+    ctx.shadowColor =
+        glow;
+
+    ctx.strokeStyle =
+        color;
+
+    ctx.lineWidth = 3;
+
+    ctx.stroke();
+
+
+
+    // ================================================
+    // LÍNEA BLANCA CENTRAL
+    // ================================================
+
+    ctx.beginPath();
+
+
+    for (
+        let i = 0;
+        i <= amount;
+        i++
+    ) {
+
+        let index;
+
+
+        if (direction === 1) {
+
+            index = i;
+
+        } else {
+
+            index =
+                TOTAL_POINTS - i;
+
+        }
+
+
+        index =
+            ((index % TOTAL_POINTS)
+            + TOTAL_POINTS)
+            % TOTAL_POINTS;
+
+
+        const point =
+            heart[index];
+
+
+        const x =
+            width / 2 +
+            point.x *
+            (Math.min(width, height) / 34);
+
+
+        const y =
+            height / 2 +
+            point.y *
+            (Math.min(width, height) / 34);
+
+
+
+        if (i === 0) {
+
+            ctx.moveTo(
+                x,
+                y
+            );
+
+        } else {
+
+            ctx.lineTo(
+                x,
+                y
+            );
+
+        }
+
+    }
+
+
+
+    ctx.shadowBlur = 8;
+
+    ctx.shadowColor =
+        "#ffffff";
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.9)";
+
+    ctx.lineWidth = 1;
+
+    ctx.stroke();
+
+
+
+    // ================================================
+    // PUNTA LUMINOSA
+    // ================================================
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        lastX,
+        lastY,
+        13,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fillStyle =
+        `hsla(
+            ${hue},
+            100%,
+            70%,
+            0.25
+        )`;
+
+
+    ctx.shadowBlur = 35;
+
+    ctx.shadowColor =
+        glow;
+
+    ctx.fill();
+
+
+
+    // ================================================
+    // CENTRO BLANCO DE LA PUNTA
+    // ================================================
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        lastX,
+        lastY,
+        3.5,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.shadowBlur = 20;
+
+    ctx.shadowColor =
+        "#ffffff";
+
+    ctx.fill();
+
+
+    ctx.shadowBlur = 0;
+
+}
+
+
+
+// =====================================================
+// INICIAR
+// =====================================================
+
+animate();
+
+
+</script>
+
+
+</body>
+
+</html>
